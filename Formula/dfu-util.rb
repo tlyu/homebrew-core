@@ -5,6 +5,8 @@ class DfuUtil < Formula
   sha256 "b4b53ba21a82ef7e3d4c47df2952adf5fa494f499b6b0b57c58c5d04ae8ff19e"
   license "GPL-2.0-or-later"
 
+  patch :DATA
+
   bottle do
     sha256 cellar: :any,                 arm64_ventura:  "03e81fc129ada62759e3cd8d892131ca326851ab6631730e9d101405c0e2594d"
     sha256 cellar: :any,                 arm64_monterey: "7d09c40c797df76fdea2862b205111fa9c14d44b09c27a0b00e083fcc827bee9"
@@ -41,3 +43,24 @@ class DfuUtil < Formula
     system bin/"dfu-suffix", "-V"
   end
 end
+__END__
+diff --git a/src/main.c b/src/main.c
+index 962c2a1..c6b5f2d 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -778,9 +778,13 @@ status_again:
+ 		}
+ 		printf("Resetting USB to switch back to Run-Time mode\n");
+ 		ret = libusb_reset_device(dfu_root->dev_handle);
+-		if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND) {
+-			warnx("error resetting after download: %s", libusb_error_name(ret));
+-			ret = EX_IOERR;
++		if (ret < 0) {
++			if (ret == LIBUSB_ERROR_NOT_FOUND) {
++				ret = 0;
++			} else {
++				warnx("error resetting after download: %s", libusb_error_name(ret));
++				ret = EX_IOERR;
++			}
+ 		}
+ 	}
